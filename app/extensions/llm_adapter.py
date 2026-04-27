@@ -458,7 +458,10 @@ class _GLMAsyncModels:
 
     def _to_image_part(self, payload: bytes, mime_type: str) -> dict[str, Any]:
         encoded = base64.b64encode(payload).decode("utf-8")
-        return {"type": "image_url", "image_url": {"url": encoded}}
+        return {
+            "type": "image_url",
+            "image_url": {"url": f"data:{mime_type};base64,{encoded}"},
+        }
 
     def _part_to_content_item(self, part: Any) -> dict[str, Any] | None:
         text = getattr(part, "text", None)
@@ -528,7 +531,9 @@ class _GLMAsyncModels:
         if getattr(config, "response_schema", None) is not None:
             payload["response_format"] = {"type": "json_object"}
 
-        if getattr(config, "thinking_config", None) is not None and model.startswith("glm-4.5"):
+        if getattr(config, "thinking_config", None) is not None and model.startswith(
+            ("glm-4.5", "glm-4.6", "glm-4.7")
+        ):
             payload["thinking"] = {"type": "enabled"}
 
         payload.update({k: v for k, v in kwargs.items() if k not in {"config"}})
@@ -727,7 +732,9 @@ def apply_glm_patch(settings: Any):
 
         genai.Client = GLMCompatibleGenAIClient
         logger.info(
-            f"🚀 GLM 兼容补丁已应用 | 模型: {settings.GLM_MODEL} | 地址: {settings.GLM_BASE_URL}"
+            "🚀 GLM 兼容补丁已应用 | "
+            f"默认模型: {settings.GLM_MODEL} | 视觉模型: {settings.GLM_VISION_MODEL} | "
+            f"地址: {settings.GLM_BASE_URL}"
         )
     except Exception as exc:
         logger.error(f"❌ GLM 兼容补丁加载失败: {exc}")

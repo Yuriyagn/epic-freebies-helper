@@ -46,8 +46,8 @@ If the project worked for you, feel free to leave a message here too: [🎉 Succ
 
 If this is your first time using a project like this, starting with GLM is usually the easiest path. The reasons are practical:
 
-- Less configuration: in most cases you only need `GLM_API_KEY` and `GLM_MODEL`.
-- Lower cost: the free quota of `glm-4.6v` is often enough for the weekly-claim use case.
+- Less configuration: in most cases you only need `GLM_API_KEY`, `GLM_MODEL`, and `GLM_VISION_MODEL`.
+- Lower cost: `glm-4.7-flash` can handle text decisions while a vision model handles captcha images.
 - More stable for this project: `glm-4.6v-flash` can occasionally fail under load with "the current model is too busy", so `glm-4.6v` is the safer default.
 - Better fit for users in China: you do not need to solve Google AI Studio registration or availability first.
 - Capability already validated: login captcha, checkout verification, drag, click, and multi-select challenges have all been verified in real runs.
@@ -86,7 +86,8 @@ Go to `Settings` -> `Secrets and variables` -> `Actions`, then fill in these fiv
 | `EPIC_PASSWORD` | Your Epic password |
 | `LLM_PROVIDER` | glm |
 | `GLM_API_KEY` | Your Zhipu API key |
-| `GLM_MODEL` | glm-4.6v |
+| `GLM_MODEL` | glm-4.7-flash |
+| `GLM_VISION_MODEL` | glm-4.6v |
 
 Configuration page example:
 ![GLM API setup](docs/images/tutorial/GLM-API.png)
@@ -96,8 +97,9 @@ Configuration page example:
 Optional notes:
 
 - Leave `GLM_BASE_URL` empty to use the default value.
-- `glm-4.6v` is the recommended `GLM_MODEL`; `glm-4.6v-flash` can fail during peak traffic.
-- Leave `CHALLENGE_CLASSIFIER_MODEL`, `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` empty if you want them to follow `GLM_MODEL`.
+- Officially, `GLM-4.7-Flash` is text-input only, so it cannot solve hCaptcha image tasks by itself; use `GLM_MODEL=glm-4.7-flash` with `GLM_VISION_MODEL=glm-4.6v`.
+- Leave `CHALLENGE_CLASSIFIER_MODEL` empty if you want it to follow `GLM_MODEL`.
+- Leave `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` empty if you want them to follow `GLM_VISION_MODEL`.
 - If you want the Gemini route instead, set `LLM_PROVIDER=gemini` and configure `GEMINI_API_KEY`.
 
 ### 3. Run the workflow manually once
@@ -204,7 +206,8 @@ environment:
   - LLM_PROVIDER=glm
   - GLM_API_KEY=your_glm_key
   - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
-  - GLM_MODEL=glm-4.6v
+  - GLM_MODEL=glm-4.7-flash
+  - GLM_VISION_MODEL=glm-4.6v
 ```
 
 Gemini / AiHubMix example:

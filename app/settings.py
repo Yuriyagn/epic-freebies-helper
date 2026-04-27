@@ -33,13 +33,23 @@ def _default_provider() -> str:
 
 def _default_model_for_provider(provider: str) -> str:
     if provider == "glm":
-        return _env("GLM_MODEL", "glm-4.5v") or "glm-4.5v"
+        return _env("GLM_MODEL", "glm-4.7-flash") or "glm-4.7-flash"
     return _env("GEMINI_MODEL", "gemini-2.5-pro") or "gemini-2.5-pro"
 
 
-def _task_model(name: str, fallback: str) -> str:
+def _default_vision_model_for_provider(provider: str) -> str:
+    if provider == "glm":
+        return _env("GLM_VISION_MODEL", "glm-4.6v") or "glm-4.6v"
+    return _env("GEMINI_MODEL", "gemini-2.5-pro") or "gemini-2.5-pro"
+
+
+def _task_model(name: str, fallback: str, *, vision: bool = False) -> str:
     provider = _default_provider()
-    provider_default = _default_model_for_provider(provider)
+    provider_default = (
+        _default_vision_model_for_provider(provider)
+        if vision
+        else _default_model_for_provider(provider)
+    )
     return _env(name) or provider_default or fallback
 
 # === 配置类定义 ===
@@ -77,8 +87,13 @@ class EpicSettings(AgentConfig):
     )
 
     GLM_MODEL: str = Field(
-        default_factory=lambda: _env("GLM_MODEL", "glm-4.5v"),
-        description="GLM vision-capable default model",
+        default_factory=lambda: _env("GLM_MODEL", "glm-4.7-flash"),
+        description="GLM text/default model",
+    )
+
+    GLM_VISION_MODEL: str = Field(
+        default_factory=lambda: _env("GLM_VISION_MODEL", "glm-4.6v"),
+        description="GLM vision-capable model used by image captcha tasks",
     )
 
     EPIC_EMAIL: str = Field(default_factory=lambda: _env("EPIC_EMAIL"))
@@ -90,13 +105,19 @@ class EpicSettings(AgentConfig):
         default_factory=lambda: _task_model("CHALLENGE_CLASSIFIER_MODEL", "gemini-2.5-flash")
     )
     IMAGE_CLASSIFIER_MODEL: str = Field(
-        default_factory=lambda: _task_model("IMAGE_CLASSIFIER_MODEL", "gemini-2.5-pro")
+        default_factory=lambda: _task_model(
+            "IMAGE_CLASSIFIER_MODEL", "gemini-2.5-pro", vision=True
+        )
     )
     SPATIAL_POINT_REASONER_MODEL: str = Field(
-        default_factory=lambda: _task_model("SPATIAL_POINT_REASONER_MODEL", "gemini-2.5-pro")
+        default_factory=lambda: _task_model(
+            "SPATIAL_POINT_REASONER_MODEL", "gemini-2.5-pro", vision=True
+        )
     )
     SPATIAL_PATH_REASONER_MODEL: str = Field(
-        default_factory=lambda: _task_model("SPATIAL_PATH_REASONER_MODEL", "gemini-2.5-pro")
+        default_factory=lambda: _task_model(
+            "SPATIAL_PATH_REASONER_MODEL", "gemini-2.5-pro", vision=True
+        )
     )
 
     cache_dir: Path = HCAPTCHA_DIR.joinpath(".cache")

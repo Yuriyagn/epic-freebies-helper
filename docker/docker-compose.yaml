@@ -26,7 +26,8 @@ services:
       # - LLM_PROVIDER=glm
       # - GLM_API_KEY=your_glm_api_key
       # - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
-      # - GLM_MODEL=glm-4.5v
+      # - GLM_MODEL=glm-4.7-flash
+      # - GLM_VISION_MODEL=glm-4.6v
 
       # ----------------------------------------
       # 运行参数
@@ -39,6 +40,7 @@ services:
       - RETRY_ON_FAILURE=true
       - WAIT_FOR_CHALLENGE_VIEW_TO_RENDER_MS=1500
       - CONSTRAINT_RESPONSE_SCHEMA=true
+      # 使用 GLM 时建议删除下面 4 行，让文本任务跟随 GLM_MODEL、图片任务跟随 GLM_VISION_MODEL
       - CHALLENGE_CLASSIFIER_MODEL=gemini-2.5-flash
       - IMAGE_CLASSIFIER_MODEL=gemini-2.5-pro
       - SPATIAL_POINT_REASONER_MODEL=gemini-2.5-pro
