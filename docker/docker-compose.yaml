@@ -28,6 +28,12 @@ services:
       # - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
       # - GLM_MODEL=glm-4.7-flash
       # - GLM_VISION_MODEL=glm-4.6v
+      # 如果使用硅基流动，请改成下面这组
+      # - LLM_PROVIDER=siliconflow
+      # - SILICONFLOW_API_KEY=your_siliconflow_api_key
+      # - SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+      # - SILICONFLOW_MODEL=Qwen/Qwen3.5-4B
+      # - SILICONFLOW_VISION_MODEL=Qwen/Qwen3.5-4B
 
       # ----------------------------------------
       # 运行参数
@@ -40,7 +46,7 @@ services:
       - RETRY_ON_FAILURE=true
       - WAIT_FOR_CHALLENGE_VIEW_TO_RENDER_MS=1500
       - CONSTRAINT_RESPONSE_SCHEMA=true
-      # 使用 GLM 时建议删除下面 4 行，让文本任务跟随 GLM_MODEL、图片任务跟随 GLM_VISION_MODEL
+      # 使用 GLM / SiliconFlow 时建议删除下面 4 行，让任务模型跟随对应 provider 默认值
       - CHALLENGE_CLASSIFIER_MODEL=gemini-2.5-flash
       - IMAGE_CLASSIFIER_MODEL=gemini-2.5-pro
       - SPATIAL_POINT_REASONER_MODEL=gemini-2.5-pro

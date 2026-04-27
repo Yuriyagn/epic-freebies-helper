@@ -56,6 +56,10 @@ jobs:
           GLM_BASE_URL: ${{ secrets.GLM_BASE_URL }}
           GLM_MODEL: ${{ secrets.GLM_MODEL }}
           GLM_VISION_MODEL: ${{ secrets.GLM_VISION_MODEL }}
+          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+          SILICONFLOW_BASE_URL: ${{ secrets.SILICONFLOW_BASE_URL }}
+          SILICONFLOW_MODEL: ${{ secrets.SILICONFLOW_MODEL }}
+          SILICONFLOW_VISION_MODEL: ${{ secrets.SILICONFLOW_VISION_MODEL }}
           CHALLENGE_CLASSIFIER_MODEL: ${{ secrets.CHALLENGE_CLASSIFIER_MODEL }}
           IMAGE_CLASSIFIER_MODEL: ${{ secrets.IMAGE_CLASSIFIER_MODEL }}
           SPATIAL_POINT_REASONER_MODEL: ${{ secrets.SPATIAL_POINT_REASONER_MODEL }}
@@ -64,7 +68,7 @@ jobs:
           ENABLE_APSCHEDULER: false
           PYTHONPATH: app
         run: |
-          echo "🚀 启动定时领取任务（支持 Gemini/AiHubMix/GLM）..."
+          echo "🚀 启动定时领取任务（支持 Gemini/AiHubMix/GLM/SiliconFlow）..."
           xvfb-run --auto-servernum --server-num=1 --server-args='-screen 0, 1920x1080x24' uv run app/deploy.py
 
       - name: Upload runtime artifacts

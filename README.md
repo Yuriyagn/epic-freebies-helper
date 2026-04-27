@@ -101,6 +101,7 @@
 - `CHALLENGE_CLASSIFIER_MODEL` 留空会跟随 `GLM_MODEL`。
 - `IMAGE_CLASSIFIER_MODEL`、`SPATIAL_POINT_REASONER_MODEL`、`SPATIAL_PATH_REASONER_MODEL` 留空会跟随 `GLM_VISION_MODEL`。
 - 如果要改 Gemini 路线，把 `LLM_PROVIDER` 设为 `gemini` 并配置 `GEMINI_API_KEY`。
+- 如果要改硅基流动路线，把 `LLM_PROVIDER` 设为 `siliconflow`，配置 `SILICONFLOW_API_KEY`，并设置 `SILICONFLOW_MODEL=Qwen/Qwen3.5-4B`、`SILICONFLOW_VISION_MODEL=Qwen/Qwen3.5-4B`。
 
 ### 3. 手动运行一次
 
@@ -220,6 +221,17 @@ environment:
   - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
   - GLM_MODEL=glm-4.7-flash
   - GLM_VISION_MODEL=glm-4.6v
+```
+
+SiliconFlow 示例：
+
+```yaml
+environment:
+  - LLM_PROVIDER=siliconflow
+  - SILICONFLOW_API_KEY=your_siliconflow_key
+  - SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+  - SILICONFLOW_MODEL=Qwen/Qwen3.5-4B
+  - SILICONFLOW_VISION_MODEL=Qwen/Qwen3.5-4B
 ```
 
 Gemini / AiHubMix 示例：

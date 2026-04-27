@@ -101,6 +101,7 @@ Optional notes:
 - Leave `CHALLENGE_CLASSIFIER_MODEL` empty if you want it to follow `GLM_MODEL`.
 - Leave `IMAGE_CLASSIFIER_MODEL`, `SPATIAL_POINT_REASONER_MODEL`, and `SPATIAL_PATH_REASONER_MODEL` empty if you want them to follow `GLM_VISION_MODEL`.
 - If you want the Gemini route instead, set `LLM_PROVIDER=gemini` and configure `GEMINI_API_KEY`.
+- If you want the SiliconFlow route, set `LLM_PROVIDER=siliconflow`, configure `SILICONFLOW_API_KEY`, and use `SILICONFLOW_MODEL=Qwen/Qwen3.5-4B` with `SILICONFLOW_VISION_MODEL=Qwen/Qwen3.5-4B`.
 
 ### 3. Run the workflow manually once
 
@@ -208,6 +209,17 @@ environment:
   - GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4
   - GLM_MODEL=glm-4.7-flash
   - GLM_VISION_MODEL=glm-4.6v
+```
+
+SiliconFlow example:
+
+```yaml
+environment:
+  - LLM_PROVIDER=siliconflow
+  - SILICONFLOW_API_KEY=your_siliconflow_key
+  - SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+  - SILICONFLOW_MODEL=Qwen/Qwen3.5-4B
+  - SILICONFLOW_VISION_MODEL=Qwen/Qwen3.5-4B
 ```
 
 Gemini / AiHubMix example:

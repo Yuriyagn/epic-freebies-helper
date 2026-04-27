@@ -46,8 +46,12 @@ def _guess_mime_type(file: Any) -> str:
     return guessed or "image/png"
 
 
+def _strip_thinking_blocks(text: str) -> str:
+    return re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE).strip()
+
+
 def _extract_json_payload(text: str) -> dict[str, Any]:
-    stripped = text.strip()
+    stripped = _strip_thinking_blocks(text)
     if stripped.startswith("```"):
         match = re.search(r"```(?:json)?\s*([\s\S]*?)```", stripped)
         if match:
@@ -56,7 +60,7 @@ def _extract_json_payload(text: str) -> dict[str, Any]:
 
 
 def _normalize_glm_response_text(text: str) -> str:
-    stripped = text.strip()
+    stripped = _strip_thinking_blocks(text)
     if not stripped:
         return stripped
 
@@ -456,6 +460,28 @@ class _GLMAsyncModels:
         self._settings = settings
         self._storage = storage
 
+    @property
+    def _provider(self) -> str:
+        return str(getattr(self._settings, "LLM_PROVIDER", "glm")).lower()
+
+    @property
+    def _provider_name(self) -> str:
+        if self._provider == "siliconflow":
+            return "SiliconFlow"
+        return "GLM"
+
+    @property
+    def _api_key(self) -> Any:
+        if self._provider == "siliconflow":
+            return getattr(self._settings, "SILICONFLOW_API_KEY", None)
+        return getattr(self._settings, "GLM_API_KEY", None)
+
+    @property
+    def _base_url(self) -> str:
+        if self._provider == "siliconflow":
+            return self._settings.SILICONFLOW_BASE_URL
+        return self._settings.GLM_BASE_URL
+
     def _to_image_part(self, payload: bytes, mime_type: str) -> dict[str, Any]:
         encoded = base64.b64encode(payload).decode("utf-8")
         return {
@@ -591,7 +617,7 @@ class _GLMAsyncModels:
 
         return payload
 
-    def _log_glm_error(self, response: httpx.Response):
+    def _log_compatible_error(self, response: httpx.Response):
         body = response.text[:2000]
         code = ""
         message = ""
@@ -601,9 +627,10 @@ class _GLMAsyncModels:
             code = str(error.get("code") or "")
             message = str(error.get("message") or "")
 
-        if response.status_code == 429 or code in {"1302", "1303", "1304", "1308", "1113"}:
+        if response.status_code == 429 or code in {"1302", "1303", "1304", "1305", "1308", "1113"}:
             logger.error(
-                "GLM quota/rate limit issue | http_status={} | code={} | message={}",
+                "{} quota/rate limit issue | http_status={} | code={} | message={}",
+                self._provider_name,
                 response.status_code,
                 code,
                 message or body,
@@ -612,7 +639,8 @@ class _GLMAsyncModels:
 
         if response.status_code in {401, 403} or code in {"1000", "1001", "1002", "1003", "1004"}:
             logger.error(
-                "GLM auth issue | http_status={} | code={} | message={}",
+                "{} auth issue | http_status={} | code={} | message={}",
+                self._provider_name,
                 response.status_code,
                 code,
                 message or body,
@@ -620,7 +648,8 @@ class _GLMAsyncModels:
             return
 
         logger.error(
-            "GLM request failed | status={} | code={} | body={}",
+            "{} request failed | status={} | code={} | body={}",
+            self._provider_name,
             response.status_code,
             code,
             body,
@@ -629,22 +658,26 @@ class _GLMAsyncModels:
     async def generate_content(self, model: str, contents: Any, **kwargs) -> _PatchedResponse:
         config = kwargs.pop("config", None)
         if config is None:
-            raise ValueError("config is required for GLM compatibility mode")
+            raise ValueError("config is required for OpenAI compatibility mode")
 
-        endpoint = self._settings.GLM_BASE_URL.rstrip("/")
+        api_key = self._api_key
+        if not api_key:
+            raise ValueError(f"{self._provider_name} API key is required")
+
+        endpoint = self._base_url.rstrip("/")
         if not endpoint.endswith("/chat/completions"):
             endpoint = f"{endpoint}/chat/completions"
 
         payload = self._build_payload(model=model, contents=contents, config=config, kwargs=kwargs)
         headers = {
-            "Authorization": f"Bearer {self._settings.GLM_API_KEY.get_secret_value()}",
+            "Authorization": f"Bearer {api_key.get_secret_value()}",
             "Content-Type": "application/json",
         }
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
             response = await client.post(endpoint, headers=headers, json=payload)
             if response.is_error:
-                self._log_glm_error(response)
+                self._log_compatible_error(response)
                 response.raise_for_status()
             data = response.json()
 
@@ -740,9 +773,30 @@ def apply_glm_patch(settings: Any):
         logger.error(f"❌ GLM 兼容补丁加载失败: {exc}")
 
 
+def apply_siliconflow_patch(settings: Any):
+    if not settings.SILICONFLOW_API_KEY:
+        return
+
+    try:
+        from google import genai
+
+        genai.Client = GLMCompatibleGenAIClient
+        logger.info(
+            "🚀 SiliconFlow 兼容补丁已应用 | "
+            f"默认模型: {settings.SILICONFLOW_MODEL} | "
+            f"视觉模型: {settings.SILICONFLOW_VISION_MODEL} | "
+            f"地址: {settings.SILICONFLOW_BASE_URL}"
+        )
+    except Exception as exc:
+        logger.error(f"❌ SiliconFlow 兼容补丁加载失败: {exc}")
+
+
 def apply_llm_patch(settings: Any):
     provider = settings.LLM_PROVIDER.lower()
     if provider == "glm":
         apply_glm_patch(settings)
+        return
+    if provider == "siliconflow":
+        apply_siliconflow_patch(settings)
         return
     apply_gemini_patch(settings)

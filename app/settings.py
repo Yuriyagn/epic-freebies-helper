@@ -28,23 +28,33 @@ def _env(name: str, default: str | None = None) -> str | None:
 
 
 def _default_provider() -> str:
-    return _env("LLM_PROVIDER", "glm" if _env("GLM_API_KEY") else "gemini") or "gemini"
+    if provider := _env("LLM_PROVIDER"):
+        return provider
+    if _env("SILICONFLOW_API_KEY"):
+        return "siliconflow"
+    if _env("GLM_API_KEY"):
+        return "glm"
+    return "gemini"
 
 
 def _default_model_for_provider(provider: str) -> str:
+    if provider == "siliconflow":
+        return _env("SILICONFLOW_MODEL", "Qwen/Qwen3.5-4B") or "Qwen/Qwen3.5-4B"
     if provider == "glm":
         return _env("GLM_MODEL", "glm-4.7-flash") or "glm-4.7-flash"
     return _env("GEMINI_MODEL", "gemini-2.5-pro") or "gemini-2.5-pro"
 
 
 def _default_vision_model_for_provider(provider: str) -> str:
+    if provider == "siliconflow":
+        return _env("SILICONFLOW_VISION_MODEL", "Qwen/Qwen3.5-4B") or "Qwen/Qwen3.5-4B"
     if provider == "glm":
         return _env("GLM_VISION_MODEL", "glm-4.6v") or "glm-4.6v"
     return _env("GEMINI_MODEL", "gemini-2.5-pro") or "gemini-2.5-pro"
 
 
 def _task_model(name: str, fallback: str, *, vision: bool = False) -> str:
-    provider = _default_provider()
+    provider = _default_provider().lower()
     provider_default = (
         _default_vision_model_for_provider(provider)
         if vision
@@ -57,8 +67,10 @@ class EpicSettings(AgentConfig):
     model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
 
     GEMINI_API_KEY: SecretStr | None = Field(
-        default_factory=lambda: _env("GEMINI_API_KEY") or _env("GLM_API_KEY"),
-        description="Gemini/AiHubMix API key",
+        default_factory=lambda: _env("GEMINI_API_KEY")
+        or _env("GLM_API_KEY")
+        or _env("SILICONFLOW_API_KEY"),
+        description="Gemini/AiHubMix API key, or compatibility shim key",
     )
 
     GEMINI_BASE_URL: str = Field(
@@ -73,7 +85,7 @@ class EpicSettings(AgentConfig):
 
     LLM_PROVIDER: str = Field(
         default_factory=_default_provider,
-        description="Supported values: gemini, glm",
+        description="Supported values: gemini, glm, siliconflow",
     )
 
     GLM_API_KEY: SecretStr | None = Field(
@@ -94,6 +106,26 @@ class EpicSettings(AgentConfig):
     GLM_VISION_MODEL: str = Field(
         default_factory=lambda: _env("GLM_VISION_MODEL", "glm-4.6v"),
         description="GLM vision-capable model used by image captcha tasks",
+    )
+
+    SILICONFLOW_API_KEY: SecretStr | None = Field(
+        default_factory=lambda: _env("SILICONFLOW_API_KEY"),
+        description="SiliconFlow API key",
+    )
+
+    SILICONFLOW_BASE_URL: str = Field(
+        default_factory=lambda: _env("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1"),
+        description="SiliconFlow OpenAI-compatible base URL",
+    )
+
+    SILICONFLOW_MODEL: str = Field(
+        default_factory=lambda: _env("SILICONFLOW_MODEL", "Qwen/Qwen3.5-4B"),
+        description="SiliconFlow text/default model",
+    )
+
+    SILICONFLOW_VISION_MODEL: str = Field(
+        default_factory=lambda: _env("SILICONFLOW_VISION_MODEL", "Qwen/Qwen3.5-4B"),
+        description="SiliconFlow vision-capable model used by image captcha tasks",
     )
 
     EPIC_EMAIL: str = Field(default_factory=lambda: _env("EPIC_EMAIL"))
